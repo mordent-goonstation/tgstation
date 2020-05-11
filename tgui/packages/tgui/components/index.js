@@ -4,6 +4,7 @@
  * @license MIT
  */
 
+export { AsciiChart } from './AsciiChart';
 export { AnimatedNumber } from './AnimatedNumber';
 export { BlockQuote } from './BlockQuote';
 export { Box } from './Box';
