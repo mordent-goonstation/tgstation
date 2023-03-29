@@ -10,6 +10,7 @@
 		BB_HOSTILE_ATTACK_WORD = "growls",
 	)
 	ai_movement = /datum/ai_movement/basic_avoidance
+	idle_behavior = /datum/idle_behavior/idle_random_walk/hostile_tameable
 
 	var/ride_penalty_movement = 1 SECONDS
 
@@ -25,10 +26,10 @@
 	if(!ishostile(new_pawn))
 		return AI_CONTROLLER_INCOMPATIBLE
 
-	RegisterSignal(new_pawn, COMSIG_PARENT_EXAMINE, .proc/on_examined)
-	RegisterSignal(new_pawn, COMSIG_CLICK_ALT, .proc/check_altclicked)
-	RegisterSignal(new_pawn, COMSIG_RIDDEN_DRIVER_MOVE, .proc/on_ridden_driver_move)
-	RegisterSignal(new_pawn, COMSIG_MOVABLE_PREBUCKLE, .proc/on_prebuckle)
+	RegisterSignal(new_pawn, COMSIG_PARENT_EXAMINE, PROC_REF(on_examined))
+	RegisterSignal(new_pawn, COMSIG_CLICK_ALT, PROC_REF(check_altclicked))
+	RegisterSignal(new_pawn, COMSIG_RIDDEN_DRIVER_MOVE, PROC_REF(on_ridden_driver_move))
+	RegisterSignal(new_pawn, COMSIG_MOVABLE_PREBUCKLE, PROC_REF(on_prebuckle))
 	return ..() //Run parent at end
 
 /datum/ai_controller/hostile_friend/UnpossessPawn(destroy)
@@ -43,6 +44,7 @@
 	return ..() //Run parent at end
 
 /datum/ai_controller/hostile_friend/proc/on_prebuckle(mob/source, mob/living/buckler, force, buckle_mob_flags)
+	SIGNAL_HANDLER
 	if(force || ai_status == AI_STATUS_OFF)
 		return
 	if(WEAKREF(buckler) != blackboard[BB_HOSTILE_FRIEND])
@@ -62,15 +64,6 @@
 
 	return simple_pawn.access_card
 
-/datum/ai_controller/hostile_friend/PerformIdleBehavior(delta_time)
-	var/mob/living/living_pawn = pawn
-	if(!isturf(living_pawn.loc) || living_pawn.pulledby || length(living_pawn.buckled_mobs))
-		return
-
-	if(DT_PROB(5, delta_time) && (living_pawn.mobility_flags & MOBILITY_MOVE))
-		var/move_dir = pick(GLOB.alldirs)
-		living_pawn.Move(get_step(living_pawn, move_dir), move_dir)
-
 /datum/ai_controller/hostile_friend/proc/on_ridden_driver_move(atom/movable/movable_parent, mob/living/user, direction)
 	SIGNAL_HANDLER
 	PauseAi(ride_penalty_movement)
@@ -88,8 +81,8 @@
 	if(in_range(pawn, new_friend))
 		new_friend.visible_message("<b>[pawn]</b> looks at [new_friend] in a friendly manner!", span_notice("[pawn] looks at you in a friendly manner!"))
 	blackboard[BB_HOSTILE_FRIEND] = friend_ref
-	RegisterSignal(new_friend, COMSIG_MOB_POINTED, .proc/check_point)
-	RegisterSignal(new_friend, COMSIG_MOB_SAY, .proc/check_verbal_command)
+	RegisterSignal(new_friend, COMSIG_MOB_POINTED, PROC_REF(check_point))
+	RegisterSignal(new_friend, COMSIG_MOB_SAY, PROC_REF(check_verbal_command))
 
 /// Someone is being mean to us, take them off our friends (add actual enemies behavior later)
 /datum/ai_controller/hostile_friend/proc/unfriend()
@@ -119,7 +112,7 @@
 	if(!istype(clicker) || blackboard[BB_HOSTILE_FRIEND] == WEAKREF(clicker))
 		return
 	. = COMPONENT_CANCEL_CLICK_ALT
-	INVOKE_ASYNC(src, .proc/command_radial, clicker)
+	INVOKE_ASYNC(src, PROC_REF(command_radial), clicker)
 
 /// Show the command radial menu
 /datum/ai_controller/hostile_friend/proc/command_radial(mob/living/clicker)
@@ -129,7 +122,7 @@
 		COMMAND_ATTACK = image(icon = 'icons/effects/effects.dmi', icon_state = "bite"),
 		)
 
-	var/choice = show_radial_menu(clicker, pawn, commands, custom_check = CALLBACK(src, .proc/check_menu, clicker), tooltips = TRUE)
+	var/choice = show_radial_menu(clicker, pawn, commands, custom_check = CALLBACK(src, PROC_REF(check_menu), clicker), tooltips = TRUE)
 	if(!choice || !check_menu(clicker))
 		return
 	set_command_mode(clicker, choice)
@@ -181,13 +174,13 @@
 			pawn.visible_message(span_notice("[pawn] [blackboard[BB_HOSTILE_ATTACK_WORD]] at [commander]'s command, and [pawn.p_they()] stop[pawn.p_s()] obediently, awaiting further orders."))
 			blackboard[BB_HOSTILE_ORDER_MODE] = HOSTILE_COMMAND_NONE
 			CancelActions()
-		// fetch: whatever the commander points to, try and bring it back
+		// follow: whatever the commander points to, try and bring it back
 		if(COMMAND_FOLLOW)
 			pawn.visible_message(span_notice("[pawn] [blackboard[BB_HOSTILE_ATTACK_WORD]] at [commander]'s command, and [pawn.p_they()] follow[pawn.p_s()] slightly in anticipation."))
 			CancelActions()
 			blackboard[BB_HOSTILE_ORDER_MODE] = HOSTILE_COMMAND_FOLLOW
 			blackboard[BB_FOLLOW_TARGET] = WEAKREF(commander)
-			current_movement_target = commander
+			set_movement_target(type, commander)
 			var/mob/living/living_pawn = pawn
 			if(living_pawn.buckled)
 				queue_behavior(/datum/ai_behavior/resist)//in case they are in bed or something
@@ -218,8 +211,12 @@
 
 	if(blackboard[BB_HOSTILE_ORDER_MODE] == HOSTILE_COMMAND_ATTACK)
 		pawn.visible_message(span_notice("[pawn] follows [pointing_friend]'s gesture towards [pointed_movable] and [blackboard[BB_HOSTILE_ATTACK_WORD]] intensely!"))
-		current_movement_target = pointed_movable
+		set_movement_target(type, pointed_movable)
 		blackboard[BB_ATTACK_TARGET] = WEAKREF(pointed_movable)
 		if(living_pawn.buckled)
 			queue_behavior(/datum/ai_behavior/resist)//in case they are in bed or something
 		queue_behavior(/datum/ai_behavior/attack)
+
+
+/datum/idle_behavior/idle_random_walk/hostile_tameable
+	walk_chance = 5

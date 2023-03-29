@@ -6,6 +6,7 @@
 /obj/item/circuit_component/router
 	display_name = "Router"
 	desc = "Copies the input chosen by \"Input Selector\" to the output chosen by \"Output Selector\"."
+	category = "Utility"
 	circuit_flags = CIRCUIT_FLAG_INPUT_SIGNAL|CIRCUIT_FLAG_OUTPUT_SIGNAL
 
 	var/datum/port/input/option/router_options
@@ -26,14 +27,7 @@
 	var/list/datum/port/output/outs
 
 /obj/item/circuit_component/router/populate_options()
-	var/static/component_options = list(
-		PORT_TYPE_ANY,
-		PORT_TYPE_STRING,
-		PORT_TYPE_NUMBER,
-		PORT_TYPE_LIST,
-		PORT_TYPE_ATOM,
-	)
-	router_options = add_option_port("Router Options", component_options)
+	router_options = add_option_port("Router Options", GLOB.wiremod_basic_types)
 
 /obj/item/circuit_component/router/populate_ports()
 	current_type = router_options.value
@@ -59,7 +53,7 @@
 
 
 // If I is in range, L[I]. If I is out of range, wrap around.
-#define WRAPACCESS(L, I) L[(((I||1)-1)%length(L)+length(L))%length(L)+1]
+#define WRAPACCESS(L, I) L[(((I || 1)-1)%length(L)+length(L))%length(L)+1]
 /obj/item/circuit_component/router/pre_input_received(datum/port/input/port)
 	var/current_option = router_options.value
 	if(current_type != current_option)

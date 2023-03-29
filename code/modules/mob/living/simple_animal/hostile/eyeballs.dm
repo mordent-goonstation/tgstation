@@ -1,7 +1,7 @@
 /mob/living/simple_animal/hostile/eyeball
 	name = "eyeball"
 	desc = "An odd looking creature, it won't stop staring..."
-	icon = 'icons/mob/carp.dmi'
+	icon = 'icons/mob/simple/carp.dmi'
 	icon_state = "eyeball"
 	icon_living = "eyeball"
 	icon_gib = ""
@@ -34,7 +34,7 @@
 	lighting_alpha = LIGHTING_PLANE_ALPHA_MOSTLY_INVISIBLE
 	sight = SEE_SELF|SEE_MOBS|SEE_OBJS|SEE_TURFS
 
-/mob/living/simple_animal/hostile/eyeball/Initialize()
+/mob/living/simple_animal/hostile/eyeball/Initialize(mapload)
 	. = ..()
 	AddElement(/datum/element/simple_flying)
 	ADD_TRAIT(src, TRAIT_SPACEWALK, INNATE_TRAIT)

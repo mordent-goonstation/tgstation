@@ -59,19 +59,18 @@
 	var/static/list/possible_mobtypes
 	if(!possible_mobtypes)
 		// The base list of allowed mob/species types
-		possible_mobtypes = typecacheof(list(
-			/mob/living/simple_animal,
-			/mob/living/carbon,
-			/datum/species,
-			))
+		possible_mobtypes = zebra_typecacheof(list(
+			/mob/living/simple_animal = TRUE,
+			/mob/living/carbon = TRUE,
+			/datum/species = TRUE,
+			// Some types to remove them and their subtypes
+			/mob/living/carbon/human/species = FALSE,
+		))
 		// Some particular types to disallow if they're too broad/abstract
+		// Not in the above typecache generator because it includes subtypes and this doesn't.
 		possible_mobtypes -= list(
 			/mob/living/simple_animal/hostile,
-			)
-		// Some types to remove them and their subtypes
-		possible_mobtypes -= typecacheof(list(
-			/mob/living/carbon/human/species,
-			))
+		)
 
 	var/mob/picked_mobtype = pick(possible_mobtypes)
 	// This works even with the species picks since we're only accessing the name
@@ -99,22 +98,20 @@
 	var/static/list/possible_mobtypes
 	if(!possible_mobtypes)
 		// The base list of allowed mob/species types
-		possible_mobtypes = typecacheof(list(
-			/mob/living/simple_animal,
-			/mob/living/carbon,
-			/datum/species,
-			))
+		possible_mobtypes = zebra_typecacheof(list(
+			/mob/living/simple_animal = TRUE,
+			/mob/living/carbon = TRUE,
+			/datum/species = TRUE,
+			// Some types to remove them and their subtypes
+			/mob/living/carbon/human/species = FALSE,
+			/mob/living/simple_animal/hostile/asteroid/elite = FALSE,
+			/mob/living/simple_animal/hostile/megafauna = FALSE,
+		))
 		// Some particular types to disallow if they're too broad/abstract
+		// Not in the above typecache generator because it includes subtypes and this doesn't.
 		possible_mobtypes -= list(
 			/mob/living/simple_animal/hostile,
-			)
-		// Some types to remove them and their subtypes
-		possible_mobtypes -= typecacheof(list(
-			/mob/living/carbon/human/species,
-			/mob/living/simple_animal/hostile/syndicate/mecha_pilot,
-			/mob/living/simple_animal/hostile/asteroid/elite,
-			/mob/living/simple_animal/hostile/megafauna,
-			))
+		)
 
 	var/mob/picked_mobtype = pick(possible_mobtypes)
 	// This works even with the species picks since we're only accessing the name
@@ -154,7 +151,7 @@
 											  /obj/projectile/temp/hot = 15,
 											  /obj/projectile/beam/disabler = 15)
 
-	var/obj/projectile/picked_projectiletype = pickweight(weighted_projectile_types)
+	var/obj/projectile/picked_projectiletype = pick_weight(weighted_projectile_types)
 
 	var/obj/item/master = comp.parent
 	comp.appliedComponents += master.AddComponent(/datum/component/mirv, picked_projectiletype)
@@ -205,8 +202,7 @@
 	var/filter_color = "#8a0c0ca1" //clarified args
 	var/new_name = pick(", eternally hungry", " of the glutton", " cursed with hunger", ", consumer of all", " of the feast")
 	master.AddElement(/datum/element/curse_announcement, "[master] is cursed with the curse of hunger!", filter_color, new_name, comp)
-	var/add_dropdel = FALSE //clarified boolean
-	comp.appliedComponents += master.AddComponent(/datum/component/curse_of_hunger, add_dropdel)
+	comp.appliedComponents += master.AddComponent(/datum/component/curse_of_hunger)
 	return newName //no spoilers!
 
 /datum/fantasy_affix/curse_of_hunger/remove(datum/component/fantasy/comp)

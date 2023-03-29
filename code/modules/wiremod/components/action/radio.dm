@@ -9,6 +9,7 @@
 /obj/item/circuit_component/radio
 	display_name = "Radio"
 	desc = "A component that can listen and send frequencies. If set to private, the component will only receive signals from other components attached to circuitboards with the same owner id."
+	category = "Action"
 
 	/// The publicity options. Controls whether it's public or private.
 	var/datum/port/input/option/public_options
@@ -46,7 +47,7 @@
 	freq.set_value(sanitize_frequency(freq.value, TRUE))
 
 /obj/item/circuit_component/radio/input_received(datum/port/input/port)
-	INVOKE_ASYNC(src, .proc/handle_radio_input, port)
+	INVOKE_ASYNC(src, PROC_REF(handle_radio_input), port)
 
 /obj/item/circuit_component/radio/proc/handle_radio_input(datum/port/input/port)
 	var/frequency = freq.value
